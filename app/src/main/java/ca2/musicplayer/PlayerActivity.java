@@ -19,11 +19,16 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageButton playPauseButton;
     private boolean isPlaying = false;
     private Runnable updateSeekBar;
+    private PlayStats playStats;
+    private long startTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
+        playStats = new PlayStats(this);
+        startTime = System.currentTimeMillis();
 
         String songPath = getIntent().getStringExtra("songPath");
         String songName = getIntent().getStringExtra("songName");
@@ -112,9 +117,9 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            isPlaying = false;
-            playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+            long playTime = System.currentTimeMillis() - startTime;
+            playStats.addPlayTime(playTime);
+            playStats.incrementSongPlay(songNameText.getText().toString());
         }
     }
 

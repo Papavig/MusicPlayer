@@ -15,25 +15,47 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 1;
-    private ListView listView;
-    private ArrayList<String> songList;
-    private ArrayList<String> songPaths;
+    private RecyclerView recyclerView;
+    private ArrayList<Song> songList;
+    private BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        listView = findViewById(R.id.song_list);
+        recyclerView = findViewById(R.id.song_list);
+        bottomNav = findViewById(R.id.bottom_navigation);
         songList = new ArrayList<>();
-        songPaths = new ArrayList<>();
 
+        setupBottomNavigation();
         requestPermissions();
+    }
+
+    private void setupBottomNavigation() {
+        bottomNav.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_home) {
+                return true;
+            } else if (itemId == R.id.nav_search) {
+                startActivity(new Intent(this, SearchActivity.class));
+                return true;
+            } else if (itemId == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+                return true;
+            }
+            return false;
+        });
     }
 
     private void requestPermissions() {
@@ -58,9 +80,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+
+        SongAdapter adapter = new SongAdapter(this, songList, (song, position) -> {
+            Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+            intent.putExtra("songPath", song.getPath());
+            intent.putExtra("songName", song.getTitle());
+            startActivity(intent);
+        });
+
+        recyclerView.setAdapter(adapter);
+    }
+
     private void loadSongs() {
         String[] projection = {
                 MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.DATA
         };
 
@@ -79,29 +116,20 @@ public class MainActivity extends AppCompatActivity {
                 do {
                     String title = cursor.getString(cursor.getColumnIndexOrThrow(
                             MediaStore.Audio.Media.TITLE));
+                    String artist = cursor.getString(cursor.getColumnIndexOrThrow(
+                            MediaStore.Audio.Media.ARTIST));
                     String path = cursor.getString(cursor.getColumnIndexOrThrow(
                             MediaStore.Audio.Media.DATA));
-                    songList.add(title);
-                    songPaths.add(path);
+
+                    songList.add(new Song(title, artist != null ? artist : "Unknown Artist", path));
                 } while (cursor.moveToNext());
 
                 cursor.close();
+                setupRecyclerView();
             }
 
             if (songList.isEmpty()) {
                 Toast.makeText(this, "No music files found", Toast.LENGTH_SHORT).show();
-            } else {
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                        android.R.layout.simple_list_item_1, songList);
-                listView.setAdapter(adapter);
-
-                listView.setOnItemClickListener((parent, view, position, id) -> {
-                    String songPath = songPaths.get(position);
-                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-                    intent.putExtra("songPath", songPath);
-                    intent.putExtra("songName", songList.get(position));
-                    startActivity(intent);
-                });
             }
         } catch (Exception e) {
             Toast.makeText(this, "Error loading music files: " + e.getMessage(),

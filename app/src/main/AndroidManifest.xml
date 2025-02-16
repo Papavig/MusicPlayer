@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ca2.musicplayer">
 
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
@@ -12,8 +13,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicPlayer">
 
+        <!-- Splash Screen (Set as Launcher) -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,9 +23,25 @@
             </intent-filter>
         </activity>
 
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
+
+        <!-- Music Player Screen -->
         <activity
             android:name=".PlayerActivity"
             android:exported="false" />
+
+        <!-- Search Screen -->
+        <activity
+            android:name=".SearchActivity"
+            android:exported="true" />
+
+        <!-- Stats Screen -->
+        <activity
+            android:name=".StatsActivity"
+            android:exported="true" />
 
     </application>
 </manifest>
